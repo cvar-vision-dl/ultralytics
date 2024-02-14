@@ -93,7 +93,7 @@ CLI_HELP_MSG = f"""
     """
 
 # Define keys for arg type checks
-CFG_FLOAT_KEYS = "warmup_epochs", "box", "cls", "dfl", "degrees", "shear", "time"
+CFG_FLOAT_KEYS = "warmup_epochs", "box", "cls", "dfl", "degrees", "shear", "time", "scale"
 CFG_FRACTION_KEYS = (
     "dropout",
     "iou",
@@ -108,7 +108,6 @@ CFG_FRACTION_KEYS = (
     "hsv_s",
     "hsv_v",
     "translate",
-    "scale",
     "perspective",
     "flipud",
     "fliplr",
