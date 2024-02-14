@@ -370,13 +370,14 @@ class RandomPerspective:
     """
 
     def __init__(
-        self, degrees=0.0, translate=0.1, scale=0.5, shear=0.0, perspective=0.0, border=(0, 0), pre_transform=None
+        self, degrees=0.0, translate=0.1, scale_in=0.5, scale_out=0.5, shear=0.0, perspective=0.0, border=(0, 0), pre_transform=None
     ):
         """Initializes RandomPerspective object with transformation parameters."""
 
         self.degrees = degrees
         self.translate = translate
-        self.scale = scale
+        self.scale_in = scale_in
+        self.scale_out = scale_out
         self.shear = shear
         self.perspective = perspective
         self.border = border  # mosaic border
@@ -411,7 +412,7 @@ class RandomPerspective:
         R = np.eye(3, dtype=np.float32)
         a = random.uniform(-self.degrees, self.degrees)
         # a += random.choice([-180, -90, 0, 90])  # add 90deg rotations to small rotations
-        s = random.uniform(1 - self.scale, 1 + self.scale)
+        s = random.uniform(1 - self.scale_out, 1 + self.scale_in)
         # s = 2 ** random.uniform(-scale, scale)
         R[:2] = cv2.getRotationMatrix2D(angle=a, center=(0, 0), scale=s)
 
@@ -976,7 +977,8 @@ def v8_transforms(dataset, imgsz, hyp, stretch=False):
             RandomPerspective(
                 degrees=hyp.degrees,
                 translate=hyp.translate,
-                scale=hyp.scale,
+                scale_in=hyp.scale_in,
+                scale_out=hyp.scale_out,
                 shear=hyp.shear,
                 perspective=hyp.perspective,
                 pre_transform=None if stretch else LetterBox(new_shape=(imgsz, imgsz)),
