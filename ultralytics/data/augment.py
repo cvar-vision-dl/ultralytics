@@ -729,9 +729,22 @@ class LetterBox:
             img = cv2.resize(img, new_unpad, interpolation=cv2.INTER_LINEAR)
         top, bottom = int(round(dh - 0.1)) if self.center else 0, int(round(dh + 0.1))
         left, right = int(round(dw - 0.1)) if self.center else 0, int(round(dw + 0.1))
-        img = cv2.copyMakeBorder(
-            img, top, bottom, left, right, cv2.BORDER_CONSTANT, value=(114, 114, 114)
-        )  # add border
+
+        # Split 5 channels and make border
+        transposed = img.transpose(2, 0, 1)
+        final_image = []
+        for channel in transposed:
+            channel = cv2.copyMakeBorder(
+                channel, top, bottom, left, right, cv2.BORDER_CONSTANT, value=144
+            )
+            final_image.append(channel)
+        img = np.stack(final_image, axis=2)
+
+        # img = cv2.copyMakeBorder(
+        #     img, top, bottom, left, right, cv2.BORDER_CONSTANT, value=(114, 114, 114)
+        # )  # add border
+
+
         if labels.get("ratio_pad"):
             labels["ratio_pad"] = (labels["ratio_pad"], (left, top))  # for evaluation
 
