@@ -132,6 +132,7 @@ CFG_INT_KEYS = (
     "workspace",
     "nbs",
     "save_period",
+    "input_channels",
 )
 CFG_BOOL_KEYS = (
     "save",

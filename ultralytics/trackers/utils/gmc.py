@@ -310,7 +310,8 @@ class GMC:
                    [4, 5, 6]])
         """
         height, width, _ = raw_frame.shape
-        frame = cv2.cvtColor(raw_frame, cv2.COLOR_BGR2GRAY)
+        # frame = cv2.cvtColor(raw_frame, cv2.COLOR_BGR2GRAY)
+        frame = raw_frame[2]
         H = np.eye(2, 3)
 
         # Downscale image

@@ -153,7 +153,8 @@ class BaseValidator:
 
             model.eval()
             # model.warmup(imgsz=(1 if pt else self.args.batch, 3, imgsz, imgsz))  # warmup
-            model.warmup(imgsz=(1 if pt else self.args.batch, 5, imgsz, imgsz))  # warmup
+            # model.warmup(imgsz=(1 if pt else self.args.batch, 5, imgsz, imgsz))  # warmup
+            model.warmup(imgsz=(1 if pt else self.args.batch, int(self.args.input_channels), imgsz, imgsz))  # warmup
 
         self.run_callbacks("on_val_start")
         dt = (

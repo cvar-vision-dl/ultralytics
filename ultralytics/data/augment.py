@@ -180,6 +180,8 @@ class Mosaic(BaseMixTransform):
             labels_patch = labels if i == 0 else labels["mix_labels"][i - 1]
             # Load image
             img = labels_patch["img"]
+            if len(img.shape) < 3:
+                img = np.expand_dims(img, -1)
             h, w = labels_patch.pop("resized_shape")
 
             # Place img in img3
@@ -215,6 +217,8 @@ class Mosaic(BaseMixTransform):
             labels_patch = labels if i == 0 else labels["mix_labels"][i - 1]
             # Load image
             img = labels_patch["img"]
+            if len(img.shape) < 3:
+                img = np.expand_dims(img, -1)
             h, w = labels_patch.pop("resized_shape")
 
             # Place img in img4
@@ -251,6 +255,8 @@ class Mosaic(BaseMixTransform):
             labels_patch = labels if i == 0 else labels["mix_labels"][i - 1]
             # Load image
             img = labels_patch["img"]
+            if len(img.shape) < 3:
+                img = np.expand_dims(img, -1)
             h, w = labels_patch.pop("resized_shape")
 
             # Place img in img9
@@ -431,9 +437,29 @@ class RandomPerspective:
         # Affine image
         if (border[0] != 0) or (border[1] != 0) or (M != np.eye(3)).any():  # image changed
             if self.perspective:
-                img = cv2.warpPerspective(img, M, dsize=self.size, borderValue=(114, 114, 114))
+                # img = cv2.warpPerspective(img, M, dsize=self.size, borderValue=(114, 114, 114))
+
+                # Split channels and warpPerspective
+                transposed = img.transpose(2, 0, 1)
+                final_image = []
+                for channel in transposed:
+                    channel = cv2.warpPerspective(
+                        channel, M, dsize=self.size, borderValue=114
+                    )
+                    final_image.append(channel)
+                img = np.stack(final_image, axis=2)
             else:  # affine
-                img = cv2.warpAffine(img, M[:2], dsize=self.size, borderValue=(114, 114, 114))
+                # img = cv2.warpAffine(img, M[:2], dsize=self.size, borderValue=(114, 114, 114))
+
+                # Split channels and warpPerspective
+                transposed = img.transpose(2, 0, 1)
+                final_image = []
+                for channel in transposed:
+                    channel = cv2.warpAffine(
+                        channel, M[:2], dsize=self.size, borderValue=114
+                    )
+                    final_image.append(channel)
+                img = np.stack(final_image, axis=2)
         return img, M, s
 
     def apply_bboxes(self, bboxes, M):
@@ -523,6 +549,8 @@ class RandomPerspective:
         labels.pop("ratio_pad", None)  # do not need ratio pad
 
         img = labels["img"]
+        if len(img.shape) < 3:
+            img = np.expand_dims(img, -1)
         cls = labels["cls"]
         instances = labels.pop("instances")
         # Make sure the coord formats are right
@@ -611,6 +639,8 @@ class RandomHSV:
         The modified image replaces the original image in the input 'labels' dict.
         """
         img = labels["img"]
+        if len(img.shape) < 3:
+            img = np.expand_dims(img, -1)
         if self.hgain or self.sgain or self.vgain:
             r = np.random.uniform(-1, 1, 3) * [self.hgain, self.sgain, self.vgain] + 1  # random gains
             hue, sat, val = cv2.split(cv2.cvtColor(img, cv2.COLOR_BGR2HSV))
@@ -662,6 +692,8 @@ class RandomFlip:
             (dict): The same dict with the flipped image and updated instances under the 'img' and 'instances' keys.
         """
         img = labels["img"]
+        if len(img.shape) < 3:
+            img = np.expand_dims(img, -1)
         instances = labels.pop("instances")
         instances.convert_bbox(format="xywh")
         h, w = img.shape[:2]
@@ -700,6 +732,8 @@ class LetterBox:
         if labels is None:
             labels = {}
         img = labels.get("img") if image is None else image
+        if len(img.shape) < 3:
+            img = np.expand_dims(img, -1)
         shape = img.shape[:2]  # current shape [height, width]
         new_shape = labels.pop("rect_shape", self.new_shape)
         if isinstance(new_shape, int):
@@ -730,7 +764,7 @@ class LetterBox:
         top, bottom = int(round(dh - 0.1)) if self.center else 0, int(round(dh + 0.1))
         left, right = int(round(dw - 0.1)) if self.center else 0, int(round(dw + 0.1))
 
-        # Split 5 channels and make border
+        # Split channels and make border
         transposed = img.transpose(2, 0, 1)
         final_image = []
         for channel in transposed:
@@ -963,7 +997,11 @@ class Format:
         """Format the image for YOLO from Numpy array to PyTorch tensor."""
         if len(img.shape) < 3:
             img = np.expand_dims(img, -1)
-        img = np.ascontiguousarray(img.transpose(2, 0, 1)[::-1])
+        if img.shape[2] != 1:
+            img = np.ascontiguousarray(img.transpose(2, 0, 1)[::-1])
+        else:
+            img = np.ascontiguousarray(img.transpose(2, 0, 1))
+        # print(img.shape)
         img = torch.from_numpy(img)
         return img
 

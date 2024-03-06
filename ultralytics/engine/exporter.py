@@ -202,7 +202,8 @@ class Exporter:
 
         # Input
         # im = torch.zeros(self.args.batch, 3, *self.imgsz).to(self.device)
-        im = torch.zeros(self.args.batch, 5, *self.imgsz).to(self.device)
+        # im = torch.zeros(self.args.batch, 5, *self.imgsz).to(self.device)
+        im = torch.zeros(self.args.batch, int(self.args.input_channels), *self.imgsz).to(self.device)
         file = Path(
             getattr(model, "pt_path", None) or getattr(model, "yaml_file", None) or model.yaml.get("yaml_file", "")
         )

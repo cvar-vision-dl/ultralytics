@@ -154,10 +154,19 @@ class BaseDataset(Dataset):
                     LOGGER.warning(f"{self.prefix}WARNING ⚠️ Removing corrupt *.npy image file {fn} due to: {e}")
                     Path(fn).unlink(missing_ok=True)
                     # im = cv2.imread(f, cv2.IMREAD_UNCHANGED)  # BGR
-                    im = np.stack(cv2.imreadmulti(f)[1], axis=2)  # Multi to BGR
+                    im = np.stack(cv2.imreadmulti(f)[1], axis=-1)  # Multi to BGR
+                    if len(im.shape) > 3:
+                        im = im.squeeze()
+                    
+                    # if im.shape[2] < 3:
+                    #     im = np.pad(im, [(0, 0), (0, 0), (0, 3 - im.shape[2])], "constant", constant_values=0)
             else:  # read image
                 # im = cv2.imread(f, cv2.IMREAD_UNCHANGED)  # BGR
                 im = np.stack(cv2.imreadmulti(f)[1], axis=2)  # Multi to BGR
+                if len(im.shape) > 3:
+                    im = im.squeeze()
+                # if im.shape[2] < 3:
+                #     im = np.pad(im, [(0, 0), (0, 0), (0, 3 - im.shape[2])], "constant", constant_values=0)
             if im is None:
                 raise FileNotFoundError(f"Image Not Found {f}")
 
