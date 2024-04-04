@@ -1,6 +1,7 @@
 # Ultralytics YOLO 🚀, AGPL-3.0 license
 
 from ultralytics.utils import LOGGER, SETTINGS, TESTS_RUNNING, colorstr
+import numpy as np
 
 try:
     # WARNING: do not move import due to protobuf issue in https://github.com/ultralytics/ultralytics/pull/4674
@@ -14,6 +15,17 @@ except (ImportError, AssertionError, TypeError):
     # TypeError for handling 'Descriptors cannot not be created directly.' protobuf errors in Windows
     SummaryWriter = None
 
+def _log_predictions(preds, category , step=0):
+    """Logs predictions to TensorBoard."""
+    if WRITER:
+        print('PREDICTIONS LOG TO TENSORBOARD')
+        # for img in preds:
+        #     print(img.shape)
+        plot_step = step * 100
+        for i, img in enumerate(preds):
+            plot_step_i = plot_step + i
+            if img is not None:
+                WRITER.add_image(category + '/predictions', img, plot_step_i, dataformats='HWC')
 
 def _log_scalars(scalars, step=0):
     """Logs scalar values to TensorBoard."""
@@ -32,7 +44,7 @@ def _log_tensorboard_graph(trainer):
         imgsz = trainer.args.imgsz
         imgsz = (imgsz, imgsz) if isinstance(imgsz, int) else imgsz
         p = next(trainer.model.parameters())  # for device, type
-        im = torch.zeros((1, 3, *imgsz), device=p.device, dtype=p.dtype)  # input image (must be zeros, not empty)
+        im = torch.zeros((1, trainer.args.input_channels, *imgsz), device=p.device, dtype=p.dtype)  # input image (must be zeros, not empty)
         with warnings.catch_warnings():
             warnings.simplefilter("ignore", category=UserWarning)  # suppress jit trace warning
             WRITER.add_graph(torch.jit.trace(de_parallel(trainer.model), im, strict=False), [])
@@ -62,11 +74,13 @@ def on_train_epoch_end(trainer):
     """Logs scalar statistics at the end of a training epoch."""
     _log_scalars(trainer.label_loss_items(trainer.tloss, prefix="train"), trainer.epoch + 1)
     _log_scalars(trainer.lr, trainer.epoch + 1)
+    _log_predictions(trainer.train_batches, 'train', trainer.epoch + 1)
 
 
 def on_fit_epoch_end(trainer):
     """Logs epoch metrics at end of training epoch."""
     _log_scalars(trainer.metrics, trainer.epoch + 1)
+    _log_predictions(trainer.val_preds, 'val', trainer.epoch + 1)
 
 
 callbacks = (

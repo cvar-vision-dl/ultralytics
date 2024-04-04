@@ -510,8 +510,8 @@ class RandomPerspective:
         xy = xy[:, :2] / xy[:, 2:3]
         segments = xy.reshape(n, -1, 2)
         bboxes = np.stack([segment2box(xy, self.size[0], self.size[1]) for xy in segments], 0)
-        segments[..., 0] = segments[..., 0].clip(bboxes[:, 0:1], bboxes[:, 2:3])
-        segments[..., 1] = segments[..., 1].clip(bboxes[:, 1:2], bboxes[:, 3:4])
+        # segments[..., 0] = segments[..., 0].clip(bboxes[:, 0:1], bboxes[:, 2:3])
+        # segments[..., 1] = segments[..., 1].clip(bboxes[:, 1:2], bboxes[:, 3:4])
         return bboxes, segments
 
     def apply_keypoints(self, keypoints, M):
@@ -584,6 +584,33 @@ class RandomPerspective:
             box1=instances.bboxes.T, box2=new_instances.bboxes.T, area_thr=0.01 if len(segments) else 0.10
         )
         labels["instances"] = new_instances[i]
+        # # print(new_instances[i].bboxes)
+
+        # original_image = labels["img"].copy()
+        # original_image = original_image.squeeze()
+        # original_image = np.stack([original_image, original_image, original_image], axis=2)
+        # original_image_copy = original_image.copy()
+        # img_copy = img.copy()
+        # img_copy = img_copy.squeeze()
+        # img_copy = np.stack([img_copy, img_copy, img_copy], axis=2)
+        # img_2_show = img_copy.copy()
+        # for box, box_original in zip(new_instances[i].bboxes, instances.bboxes):
+        #     color = np.random.randint(0, 255, (3,))
+        #     color = (int(color[0]), int(color[1]), int(color[2]))
+        #     cv2.rectangle(img_2_show, (int(box[0]), int(box[1])), (int(box[2]), int(box[3])), color, 3)
+        #     cv2.rectangle(original_image, (int(box_original[0]), int(box_original[1])), (int(box_original[2]), int(box_original[3])), color, 3)
+        # img_2_show = cv2.addWeighted(img_2_show, 0.5, img_copy, 0.5, 0)
+        # img_2_show_original = cv2.addWeighted(original_image, 0.5, original_image_copy, 0.5, 0)
+
+        # img_2_show = cv2.resize(img_2_show, (640, 640))
+        # img_2_show_original = cv2.resize(img_2_show_original, (640, 640))
+        # final_image = cv2.hconcat([img_2_show, img_2_show_original])
+        # cv2.imshow("img", final_image)
+        # k = cv2.waitKey(0)
+        # if k == 27:
+        #     exit(0)
+        # cv2.destroyAllWindows()
+
         labels["cls"] = cls[i]
         labels["img"] = img
         labels["resized_shape"] = img.shape[:2]
@@ -769,7 +796,7 @@ class LetterBox:
         final_image = []
         for channel in transposed:
             channel = cv2.copyMakeBorder(
-                channel, top, bottom, left, right, cv2.BORDER_CONSTANT, value=144
+                channel, top, bottom, left, right, cv2.BORDER_CONSTANT, value=114
             )
             final_image.append(channel)
         img = np.stack(final_image, axis=2)

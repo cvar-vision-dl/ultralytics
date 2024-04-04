@@ -115,7 +115,9 @@ class BaseValidator:
             model = model.half() if self.args.half else model.float()
             # self.model = model
             self.loss = torch.zeros_like(trainer.loss_items, device=trainer.device)
-            self.args.plots &= trainer.stopper.possible_stop or (trainer.epoch == trainer.epochs - 1)
+            # print(self.args.plots, trainer.stopper.possible_stop, trainer.epoch == trainer.epochs - 1)
+            # self.args.plots &= trainer.stopper.possible_stop or (trainer.epoch == trainer.epochs - 1)
+            # print(self.args.plots)
             model.eval()
         else:
             callbacks.add_integration_callbacks(self)
@@ -166,6 +168,7 @@ class BaseValidator:
         bar = TQDM(self.dataloader, desc=self.get_desc(), total=len(self.dataloader))
         self.init_metrics(de_parallel(model))
         self.jdict = []  # empty before each val
+        val_plots = []
         for batch_i, batch in enumerate(bar):
             self.run_callbacks("on_val_batch_start")
             self.batch_i = batch_i
@@ -187,9 +190,12 @@ class BaseValidator:
                 preds = self.postprocess(preds)
 
             self.update_metrics(preds, batch)
-            if self.args.plots and batch_i < 3:
+            # print('Plot_images', self.args.plots, batch_i)
+            # if self.args.plots and batch_i < 3:
+            if self.args.plots and batch_i % 10 == 0:
                 self.plot_val_samples(batch, batch_i)
-                self.plot_predictions(batch, preds, batch_i)
+                val_plot = self.plot_predictions(batch, preds, batch_i)
+                val_plots.append(val_plot)
 
             self.run_callbacks("on_val_batch_end")
         stats = self.get_stats()
@@ -201,7 +207,9 @@ class BaseValidator:
         if self.training:
             model.float()
             results = {**stats, **trainer.label_loss_items(self.loss.cpu() / len(self.dataloader), prefix="val")}
-            return {k: round(float(v), 5) for k, v in results.items()}  # return results as 5 decimal place floats
+            results = {k: round(float(v), 5) for k, v in results.items()}
+            results['preds'] = val_plots
+            return results  # return results as 5 decimal place floats
         else:
             LOGGER.info(
                 "Speed: %.1fms preprocess, %.1fms inference, %.1fms loss, %.1fms postprocess per image"

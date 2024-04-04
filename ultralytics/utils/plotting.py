@@ -778,8 +778,9 @@ def plot_images(
         annotator.im.save(fname)  # save
         if on_plot:
             on_plot(fname)
-    else:
-        return np.asarray(annotator.im)
+    # else:
+    #     return np.asarray(annotator.im)
+    return np.asarray(annotator.im)
 
 
 @plt_settings()

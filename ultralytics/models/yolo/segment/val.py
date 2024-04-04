@@ -142,7 +142,7 @@ class SegmentationValidator(DetectionValidator):
                 self.stats[k].append(stat[k])
 
             pred_masks = torch.as_tensor(pred_masks, dtype=torch.uint8)
-            if self.args.plots and self.batch_i < 3:
+            if self.args.plots and self.batch_i % 10 == 0:
                 self.plot_masks.append(pred_masks[:15].cpu())  # filter top 15 to plot
 
             # Save
@@ -203,7 +203,7 @@ class SegmentationValidator(DetectionValidator):
 
     def plot_predictions(self, batch, preds, ni):
         """Plots batch predictions with masks and bounding boxes."""
-        plot_images(
+        plots = plot_images(
             batch["img"],
             *output_to_target(preds[0], max_det=self.args.max_det),  # not set to self.args.max_det due to slow plotting speed
             torch.cat(self.plot_masks, dim=0) if len(self.plot_masks) else self.plot_masks,
@@ -211,8 +211,11 @@ class SegmentationValidator(DetectionValidator):
             fname=self.save_dir / f"val_batch{ni}_pred.jpg",
             names=self.names,
             on_plot=self.on_plot,
+            save=False,
+            threaded=False,
         )  # pred
         self.plot_masks.clear()
+        return plots
 
     def pred_to_json(self, predn, filename, pred_masks):
         """Save one JSON result."""

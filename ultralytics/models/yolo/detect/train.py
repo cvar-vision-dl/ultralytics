@@ -122,7 +122,7 @@ class DetectionTrainer(BaseTrainer):
 
     def plot_training_samples(self, batch, ni):
         """Plots training samples with their annotations."""
-        plot_images(
+        plots = plot_images(
             images=batch["img"],
             batch_idx=batch["batch_idx"],
             cls=batch["cls"].squeeze(-1),
@@ -130,7 +130,10 @@ class DetectionTrainer(BaseTrainer):
             paths=batch["im_file"],
             fname=self.save_dir / f"train_batch{ni}.jpg",
             on_plot=self.on_plot,
+            save=False,
+            threaded=False,
         )
+        return plots
 
     def plot_metrics(self):
         """Plots metrics from a CSV file."""

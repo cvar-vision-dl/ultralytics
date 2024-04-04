@@ -150,7 +150,11 @@ class BaseTrainer:
         self.tloss = None
         self.loss_names = ["Loss"]
         self.csv = self.save_dir / "results.csv"
-        self.plot_idx = [0, 1, 2]
+        self.plot_idx = [0, 1, 2, 3]
+
+        # Logging
+        self.last_batch = None
+        self.val_preds = None
 
         # Callbacks
         self.callbacks = _callbacks or callbacks.get_default_callbacks()
@@ -358,6 +362,8 @@ class BaseTrainer:
                 pbar = TQDM(enumerate(self.train_loader), total=nb)
             self.tloss = None
             self.optimizer.zero_grad()
+
+            self.train_batches = []
             for i, batch in pbar:
                 self.run_callbacks("on_train_batch_start")
                 # Warmup
@@ -412,7 +418,9 @@ class BaseTrainer:
                     )
                     self.run_callbacks("on_batch_end")
                     if self.args.plots and ni in self.plot_idx:
-                        self.plot_training_samples(batch, ni)
+                        self.train_batches.append(self.plot_training_samples(batch, ni))
+                
+                # self.last_batch = batch['img']
 
                 self.run_callbacks("on_train_batch_end")
 
@@ -424,7 +432,8 @@ class BaseTrainer:
 
                 # Validation
                 if self.args.val or final_epoch or self.stopper.possible_stop or self.stop:
-                    self.metrics, self.fitness = self.validate()
+                    # self.metrics, self.fitness = self.validate()
+                    self.metrics, self.fitness, self.val_preds = self.validate()
                 self.save_metrics(metrics={**self.label_loss_items(self.tloss), **self.metrics, **self.lr})
                 self.stop |= self.stopper(epoch + 1, self.fitness)
                 if self.args.time:
@@ -545,12 +554,16 @@ class BaseTrainer:
         """
         metrics = self.validator(self)
         
+        val_preds = None
+        if 'preds' in metrics:
+            val_preds = metrics.pop('preds')
+
         print(metrics)  # print metrics
 
         fitness = metrics.pop("fitness", -self.loss.detach().cpu().numpy())  # use loss as fitness measure if not found
         if not self.best_fitness or self.best_fitness < fitness:
             self.best_fitness = fitness
-        return metrics, fitness
+        return metrics, fitness, val_preds
 
     def get_model(self, cfg=None, weights=None, verbose=True):
         """Get model and raise NotImplementedError for loading cfg files."""
