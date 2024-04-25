@@ -673,7 +673,7 @@ def plot_images(
         batch_idx = batch_idx.cpu().numpy()
 
     max_size = 1920  # max image size
-    bs, _, h, w = images.shape  # batch size, _, height, width
+    bs, ch, h, w = images.shape  # batch size, _, height, width
     bs = min(bs, max_subplots)  # limit plot images
     ns = np.ceil(bs**0.5)  # number of subplots (square)
     if np.max(images[0]) <= 1:
@@ -683,7 +683,10 @@ def plot_images(
     mosaic = np.full((int(ns * h), int(ns * w), 3), 255, dtype=np.uint8)  # init
     for i in range(bs):
         x, y = int(w * (i // ns)), int(h * (i % ns))  # block origin
-        mosaic[y : y + h, x : x + w, :] = images[i].transpose(1, 2, 0)[:, :, :3]
+        image2show = images[i]
+        if ch == 2:
+            image2show = np.stack([images[i][0], images[i][0], images[i][0]])
+        mosaic[y : y + h, x : x + w, :] = image2show.transpose(1, 2, 0)[:, :, :3]
 
     # Resize (optional)
     scale = max_size / ns / max(h, w)

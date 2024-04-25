@@ -29,6 +29,20 @@ def _log_images(imgs_dict, group=""):
         for k, v in imgs_dict.items():
             run[f"{group}/{k}"].upload(File(v))
 
+def _log_predictions(preds, category , step=0):
+    """Logs predictions to Neptune."""
+    if run:
+        print('PREDICTIONS LOG TO NEPTUNE')
+        # for img in preds:
+        #     print(img.shape)
+        plot_step = step * 100
+        for i, img in enumerate(preds):
+            plot_step_i = plot_step + i
+            if img is not None:
+                # WRITER.add_image(category + '/predictions', img, plot_step_i, dataformats='HWC')
+                # run[category + '/predictions'].upload(File.as_image(img))
+                run[category + '/predictions'].append(File.as_image(img), step=plot_step_i)
+
 
 def _log_plot(title, plot_path):
     """
@@ -52,7 +66,11 @@ def on_pretrain_routine_start(trainer):
     """Callback function called before the training routine starts."""
     try:
         global run
-        run = neptune.init_run(project=trainer.args.project or "YOLOv8", name=trainer.args.name, tags=["YOLOv8"])
+        print('NEPTUNE CONFIGURATION')
+        print(str(trainer.args.project).split('/')[-1])
+        print(trainer.args.name)
+        # run = neptune.init_run(project=trainer.args.project or "YOLOv8", name=trainer.args.name, tags=["YOLOv8"])
+        run = neptune.init_run(project=str(trainer.args.project).split('/')[-1], name=trainer.args.name, tags=["YOLOv8"])
         run["Configuration/Hyperparameters"] = {k: "" if v is None else v for k, v in vars(trainer.args).items()}
     except Exception as e:
         LOGGER.warning(f"WARNING ⚠️ NeptuneAI installed but not initialized correctly, not logging this run. {e}")
@@ -62,8 +80,9 @@ def on_train_epoch_end(trainer):
     """Callback function called at end of each training epoch."""
     _log_scalars(trainer.label_loss_items(trainer.tloss, prefix="train"), trainer.epoch + 1)
     _log_scalars(trainer.lr, trainer.epoch + 1)
-    if trainer.epoch == 1:
-        _log_images({f.stem: str(f) for f in trainer.save_dir.glob("train_batch*.jpg")}, "Mosaic")
+    # if trainer.epoch == 1:
+    #     _log_images({f.stem: str(f) for f in trainer.save_dir.glob("train_batch*.jpg")}, "Mosaic")
+    _log_predictions(trainer.train_batches, 'train', trainer.epoch + 1)
 
 
 def on_fit_epoch_end(trainer):
@@ -73,13 +92,14 @@ def on_fit_epoch_end(trainer):
 
         run["Configuration/Model"] = model_info_for_loggers(trainer)
     _log_scalars(trainer.metrics, trainer.epoch + 1)
+    _log_predictions(trainer.val_preds, 'val', trainer.epoch + 1)
 
 
 def on_val_end(validator):
     """Callback function called at end of each validation."""
-    if run:
-        # Log val_labels and val_pred
-        _log_images({f.stem: str(f) for f in validator.save_dir.glob("val*.jpg")}, "Validation")
+    # if run:
+    #     # Log val_labels and val_pred
+    #     _log_images({f.stem: str(f) for f in validator.save_dir.glob("val*.jpg")}, "Validation")
 
 
 def on_train_end(trainer):

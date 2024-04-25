@@ -47,10 +47,12 @@ class DetectionTrainer(BaseTrainer):
         assert mode in ["train", "val"]
         with torch_distributed_zero_first(rank):  # init dataset *.cache only once if DDP
             dataset = self.build_dataset(dataset_path, mode, batch_size)
-        shuffle = mode == "train"
-        if getattr(dataset, "rect", False) and shuffle:
-            LOGGER.warning("WARNING ⚠️ 'rect=True' is incompatible with DataLoader shuffle, setting shuffle=False")
-            shuffle = False
+        # shuffle = mode == "train"
+        shuffle = mode in ("train", "val")
+        print('DATASET SUFFLE:', shuffle, 'for', mode)
+        # if getattr(dataset, "rect", False) and shuffle:
+        #     LOGGER.warning("WARNING ⚠️ 'rect=True' is incompatible with DataLoader shuffle, setting shuffle=False")
+        #     shuffle = False
         workers = self.args.workers if mode == "train" else self.args.workers * 2
         return build_dataloader(dataset, batch_size, workers, shuffle, rank)  # return dataloader
 

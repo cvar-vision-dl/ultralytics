@@ -162,9 +162,13 @@ class BaseDataset(Dataset):
                     #     im = np.pad(im, [(0, 0), (0, 0), (0, 3 - im.shape[2])], "constant", constant_values=0)
             else:  # read image
                 # im = cv2.imread(f)  # BGR
-                im = np.stack(cv2.imreadmulti(f)[1], axis=2)  # Multi to BGR
-                if len(im.shape) > 3:
-                    im = im.squeeze()
+                imgs = cv2.imreadmulti(f)[1]
+                if len(imgs) == 0:
+                    print('ERROR, FILE:', f)
+                else:
+                    im = np.stack(imgs, axis=2)  # Multi to BGR
+                    if len(im.shape) > 3:
+                        im = im.squeeze()
                 # if im.shape[2] < 3:
                 #     im = np.pad(im, [(0, 0), (0, 0), (0, 3 - im.shape[2])], "constant", constant_values=0)
             if im is None:
@@ -175,9 +179,21 @@ class BaseDataset(Dataset):
                 r = self.imgsz / max(h0, w0)  # ratio
                 if r != 1:  # if sizes are not equal
                     w, h = (min(math.ceil(w0 * r), self.imgsz), min(math.ceil(h0 * r), self.imgsz))
-                    im = cv2.resize(im, (w, h), interpolation=cv2.INTER_LINEAR)
+                    # im = cv2.resize(im, (w, h), interpolation=cv2.INTER_LINEAR)
+                    transposed = im.transpose(2, 0, 1)
+                    final_image = []
+                    for channel in transposed:
+                        channel = cv2.resize(channel, (w, h), interpolation=cv2.INTER_AREA)
+                        final_image.append(channel)
+                    im = np.stack(final_image, axis=2)
             elif not (h0 == w0 == self.imgsz):  # resize by stretching image to square imgsz
-                im = cv2.resize(im, (self.imgsz, self.imgsz), interpolation=cv2.INTER_LINEAR)
+                # im = cv2.resize(im, (self.imgsz, self.imgsz), interpolation=cv2.INTER_LINEAR)
+                transposed = im.transpose(2, 0, 1)
+                final_image = []
+                for channel in transposed:
+                    channel = cv2.resize(channel, (self.imgsz, self.imgsz), interpolation=cv2.INTER_AREA)
+                    final_image.append(channel)
+                im = np.stack(final_image, axis=2)
 
             # Add to buffer if training with augmentations
             if self.augment:
