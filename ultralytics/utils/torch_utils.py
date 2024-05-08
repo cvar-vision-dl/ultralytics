@@ -429,6 +429,8 @@ def init_seeds(seed=0, deterministic=False):
         torch.use_deterministic_algorithms(False)
         torch.backends.cudnn.deterministic = False
 
+    return seed
+
 
 class ModelEMA:
     """Updated Exponential Moving Average (EMA) from https://github.com/rwightman/pytorch-image-models

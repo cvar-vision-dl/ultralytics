@@ -72,6 +72,9 @@ def on_pretrain_routine_start(trainer):
         # run = neptune.init_run(project=trainer.args.project or "YOLOv8", name=trainer.args.name, tags=["YOLOv8"])
         run = neptune.init_run(project=str(trainer.args.project).split('/')[-1], name=trainer.args.name, tags=["YOLOv8"])
         run["Configuration/Hyperparameters"] = {k: "" if v is None else v for k, v in vars(trainer.args).items()}
+
+        run["sys/tags"].add(str(trainer.seed))
+        run["sys/tags"].add(trainer.args.task)
     except Exception as e:
         LOGGER.warning(f"WARNING ⚠️ NeptuneAI installed but not initialized correctly, not logging this run. {e}")
 
