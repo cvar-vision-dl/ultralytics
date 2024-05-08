@@ -74,7 +74,19 @@ def on_pretrain_routine_start(trainer):
         run["Configuration/Hyperparameters"] = {k: "" if v is None else v for k, v in vars(trainer.args).items()}
 
         run["sys/tags"].add(str(trainer.seed))
-        run["sys/tags"].add(trainer.args.task)
+        run["sys/tags"].add(str(trainer.args.task))
+        run["sys/tags"].add(str(trainer.args.imgsz))
+        run["sys/tags"].add(str(trainer.args.name).split('_')[0])
+        data_names = list(str(trainer.args.data).split('/')[-1].split('.')[0].split('_'))
+        data_names.reverse()
+        image_names = list()
+        for i in range(int(trainer.args.input_channels)):
+            image_names.append(data_names[i])
+        image_names.reverse()
+        if len(image_names) == 1:
+            run["sys/tags"].add(str(image_names[0]))
+        else:
+            run["sys/tags"].add(str('_'.join(image_names)))
     except Exception as e:
         LOGGER.warning(f"WARNING ⚠️ NeptuneAI installed but not initialized correctly, not logging this run. {e}")
 
