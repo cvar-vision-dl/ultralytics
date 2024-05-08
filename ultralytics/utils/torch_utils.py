@@ -409,7 +409,7 @@ def init_seeds(seed=0, deterministic=False):
     """Initialize random number generator (RNG) seeds https://pytorch.org/docs/stable/notes/randomness.html."""
     if not deterministic: seed = random.randint(0, 999999999)
 
-    print('/!\ RANDOM SEED:', seed)
+    print('/!\\ RANDOM SEED:', seed)
 
     random.seed(seed)
     np.random.seed(seed)
