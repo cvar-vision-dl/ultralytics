@@ -32,16 +32,17 @@ def _log_images(imgs_dict, group=""):
 def _log_predictions(preds, category , step=0):
     """Logs predictions to Neptune."""
     if run:
-        print('PREDICTIONS LOG TO NEPTUNE')
-        # for img in preds:
-        #     print(img.shape)
-        plot_step = step * 100
-        for i, img in enumerate(preds):
-            plot_step_i = plot_step + i
-            if img is not None:
-                # WRITER.add_image(category + '/predictions', img, plot_step_i, dataformats='HWC')
-                # run[category + '/predictions'].upload(File.as_image(img))
-                run[category + '/predictions'].append(File.as_image(img), step=plot_step_i)
+        if step % 10 == 0:
+            print('PREDICTIONS LOG TO NEPTUNE')
+            # for img in preds:
+            #     print(img.shape)
+            plot_step = step * 100
+            for i, img in enumerate(preds):
+                plot_step_i = plot_step + i
+                if img is not None:
+                    # WRITER.add_image(category + '/predictions', img, plot_step_i, dataformats='HWC')
+                    # run[category + '/predictions'].upload(File.as_image(img))
+                    run[category + '/predictions'].append(File.as_image(img), step=plot_step_i)
 
 
 def _log_plot(title, plot_path):
@@ -52,6 +53,8 @@ def _log_plot(title, plot_path):
         title (str): Title of the plot.
         plot_path (PosixPath | str): Path to the saved image file.
     """
+    import matplotlib
+    matplotlib.use("Agg")
     import matplotlib.image as mpimg
     import matplotlib.pyplot as plt
 
